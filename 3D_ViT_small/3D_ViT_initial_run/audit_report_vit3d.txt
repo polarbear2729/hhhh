@@ -1,0 +1,73 @@
+======================================================================
+  MODEL AUDIT REPORT — 3D ViT Lung Nodule Classification
+======================================================================
+  Total Checks : 31
+  Passed       : 28
+  Warnings     : 2
+  Failed       : 1
+
+  [PASS]  File exists: Model weights
+         Found at 'best_model_vit3d.pth' (48255.4 KB)
+  [PASS]  File exists: Test predictions CSV
+         Found at 'vit3d_test_predictions.csv' (101.0 KB)
+  [PASS]  File exists: Training log CSV
+         Found at 'vit3d_training_log.csv' (2.0 KB)
+  [PASS]  File exists: Best metrics JSON
+         Found at 'best_metrics_vit3d.json' (0.2 KB)
+  [PASS]  Weights differ from random init
+         Mean weight delta=0.024219, Pearson r=-0.0491 vs random
+  [PASS]  MLP head weights are non-trivial
+         MLP head weight std=0.020032 — looks trained
+  [PASS]  Predictions CSV columns
+         All required columns present. Shape: (1247, 3)
+  [PASS]  No NaN values
+         Zero NaN values
+  [PASS]  Probabilities in [0,1]
+         Range: [0.4927, 0.5039]
+  [PASS]  Labels are binary
+         Positive patches: 172, Negative patches: 1075
+  [FAIL]  Predictions are not collapsed
+         Probability std=0.0022 — model may be predicting same value for all inputs
+  [PASS]  Both classes in test set
+         Both positive and negative samples present
+  [PASS]  AUROC recomputable from predictions
+         Recomputed AUROC=0.7828
+  [PASS]  AUPRC recomputable from predictions
+         Recomputed AUPRC=0.8537
+  [PASS]  AUROC sanity range
+         AUROC=0.7828 in plausible range [0.5, 0.999]
+  [PASS]  Sensitivity in valid range
+         Sensitivity=0.9890
+  [PASS]  Training log has enough epochs
+         17 epochs recorded
+  [PASS]  Training loss decreased
+         Loss: 1.2037 → 1.1954
+  [PASS]  Val AUROC improved over training
+         Val AUROC: 0.7673 → 0.7882 (best)
+  [PASS]  Training loss is not flat
+         Train loss std=0.003895
+  [PASS]  Val AUROC variance is realistic
+         Val AUROC std=0.0515
+  [PASS]  Live inference matches saved predictions
+         50/50 samples match within tolerance=0.01. Max diff=0.006104
+  [WARN]  Live inference AUROC on sample
+         Live AUROC on 50 samples = 0.4286 < 0.5
+  [PASS]  No overlap: Train ∩ Val
+         Zero patients shared between Train ∩ Val
+  [PASS]  No overlap: Train ∩ Test
+         Zero patients shared between Train ∩ Test
+  [PASS]  No overlap: Val ∩ Test
+         Zero patients shared between Val ∩ Test
+  [PASS]  Class distribution in train
+         Pos=822, Neg=5115, Pos%=13.8%
+  [PASS]  Class distribution in val
+         Pos=192, Neg=1175, Pos%=14.0%
+  [PASS]  Class distribution in test
+         Pos=172, Neg=1075, Pos%=13.8%
+  [PASS]  Permutation test (p < 0.05)
+         Real AUROC significantly beats random (p=0.0000, beats 100.0% of permutations)
+  [WARN]  Positive scores > Negative scores
+         Pos mean > Neg mean but not statistically significant (p=0.3609)
+======================================================================
+  VERDICT: AUDIT FAILED — 1 critical issue(s) found ❌
+======================================================================

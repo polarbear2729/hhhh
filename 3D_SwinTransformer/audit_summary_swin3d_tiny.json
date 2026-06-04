@@ -1,0 +1,159 @@
+{
+    "total": 30,
+    "passed": 30,
+    "warned": 0,
+    "failed": 0,
+    "verdict": "LEGITIMATE",
+    "checks": [
+        {
+            "check": "File exists: Model weights",
+            "status": "PASS",
+            "detail": "Found at 'best_model_swin3d_tiny.pth' (21929.0 KB)"
+        },
+        {
+            "check": "File exists: Training log CSV",
+            "status": "PASS",
+            "detail": "Found at 'swin3d_tiny_training_log.csv' (17.4 KB)"
+        },
+        {
+            "check": "File exists: Best metrics JSON",
+            "status": "PASS",
+            "detail": "Found at 'best_metrics_swin3d_tiny.json' (0.2 KB)"
+        },
+        {
+            "check": "Weights differ from random init",
+            "status": "PASS",
+            "detail": "Mean weight delta=0.082882, r=-0.0065"
+        },
+        {
+            "check": "MLP head weights are non-trivial",
+            "status": "PASS",
+            "detail": "std=0.031598"
+        },
+        {
+            "check": "Predictions CSV columns",
+            "status": "PASS",
+            "detail": "All required columns present. Shape: (1247, 3)"
+        },
+        {
+            "check": "No NaN values",
+            "status": "PASS",
+            "detail": "Zero NaN values"
+        },
+        {
+            "check": "Probabilities in [0,1]",
+            "status": "PASS",
+            "detail": "Range: [0.2458, 0.9922]"
+        },
+        {
+            "check": "Labels are binary",
+            "status": "PASS",
+            "detail": "Positive patches: 172, Negative patches: 1075"
+        },
+        {
+            "check": "Predictions are not collapsed",
+            "status": "PASS",
+            "detail": "std=0.2231, mean=0.3324"
+        },
+        {
+            "check": "Both classes in test set",
+            "status": "PASS",
+            "detail": "Both positive and negative present"
+        },
+        {
+            "check": "AUROC recomputable",
+            "status": "PASS",
+            "detail": "Recomputed AUROC=0.9677"
+        },
+        {
+            "check": "AUPRC recomputable",
+            "status": "PASS",
+            "detail": "Recomputed AUPRC=0.9875"
+        },
+        {
+            "check": "AUROC sanity range",
+            "status": "PASS",
+            "detail": "AUROC=0.9677 plausible"
+        },
+        {
+            "check": "Sensitivity in valid range",
+            "status": "PASS",
+            "detail": "Sensitivity=0.8242"
+        },
+        {
+            "check": "Training log has enough epochs",
+            "status": "PASS",
+            "detail": "94 epochs"
+        },
+        {
+            "check": "Training loss decreased",
+            "status": "PASS",
+            "detail": "1.3900 \u2192 0.8270"
+        },
+        {
+            "check": "Val AUROC improved",
+            "status": "PASS",
+            "detail": "0.7210 \u2192 0.9870"
+        },
+        {
+            "check": "Training loss is not flat",
+            "status": "PASS",
+            "detail": "std=0.176824"
+        },
+        {
+            "check": "Val AUROC variance realistic",
+            "status": "PASS",
+            "detail": "std=0.0982"
+        },
+        {
+            "check": "Live inference matches saved predictions",
+            "status": "PASS",
+            "detail": "All 1247 probabilities match within tolerance. Max diff=0.00000000"
+        },
+        {
+            "check": "Live inference AUROC on test set",
+            "status": "PASS",
+            "detail": "AUROC=0.9571"
+        },
+        {
+            "check": "No overlap: Train \u2229 Val",
+            "status": "PASS",
+            "detail": "Zero patients shared"
+        },
+        {
+            "check": "No overlap: Train \u2229 Test",
+            "status": "PASS",
+            "detail": "Zero patients shared"
+        },
+        {
+            "check": "No overlap: Val \u2229 Test",
+            "status": "PASS",
+            "detail": "Zero patients shared"
+        },
+        {
+            "check": "Class distribution in train",
+            "status": "PASS",
+            "detail": "Pos=822, Neg=5115, Pos%=13.8%"
+        },
+        {
+            "check": "Class distribution in val",
+            "status": "PASS",
+            "detail": "Pos=192, Neg=1175, Pos%=14.0%"
+        },
+        {
+            "check": "Class distribution in test",
+            "status": "PASS",
+            "detail": "Pos=172, Neg=1075, Pos%=13.8%"
+        },
+        {
+            "check": "Permutation test",
+            "status": "PASS",
+            "detail": "Beats 100.0% of random permutations"
+        },
+        {
+            "check": "Positive scores > Negative scores",
+            "status": "PASS",
+            "detail": "Pos mean=0.7892 > Neg mean=0.2594, p=4.21e-83"
+        }
+    ]
+}
