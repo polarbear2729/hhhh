@@ -1,0 +1,268 @@
+TEST RESULTS ALL MODELS - 
+Resnet18 -
+
+==================================================
+FINAL TEST METRICS (SCAN-LEVEL)
+==================================================
+AUROC (Primary):           0.9977  (95% CI: 0.9912 - 1.0000)
+AUPRC:                     0.9990
+F1 Score:                  0.9890
+Sensitivity (Recall):      0.9890
+Specificity:               0.9767
+Confusion Matrix:
+  TP:   90   FN:    1
+  FP:    1   TN:   42
+
+FROC (False Positives per Scan vs Sensitivity):
+  0.125 FP/scan : 0.9535
+  0.25 FP/scan : 0.9767
+  0.5 FP/scan : 0.9942
+  1 FP/scan  : 0.9942
+  2 FP/scan  : 0.9942
+  4 FP/scan  : 1.0000
+  8 FP/scan  : 1.0000
+====================================================
+
+[Saved] Test predictions exported to 'resnet18_gradcam_test_predictions.csv'
+
+
+Densenet121 -
+
+==================================================
+FINAL TEST METRICS (SCAN-LEVEL)
+==================================================
+AUROC (Primary):           0.9905  (95% CI: 0.9779 - 0.9982)
+AUPRC:                     0.9958
+F1 Score:                  0.9560
+Sensitivity (Recall):      0.9560
+Specificity:               0.9070
+Confusion Matrix:
+  TP:   87   FN:    4
+  FP:    4   TN:   39
+
+FROC (False Positives per Scan vs Sensitivity):
+  0.125 FP/scan : 0.8779
+  0.25 FP/scan : 0.9128
+  0.5 FP/scan : 0.9477
+  1 FP/scan  : 0.9593
+  2 FP/scan  : 0.9709
+  4 FP/scan  : 0.9942
+  8 FP/scan  : 1.0000
+====================================================
+
+[Saved] Test predictions exported to 'densenet_gradcam_test_predictions.csv'
+
+
+
+Efficientnet B0 - 
+==================================================
+FINAL TEST METRICS (SCAN-LEVEL)
+==================================================
+AUROC (Primary):           0.9808  (95% CI: 0.9599 - 0.9948)
+AUPRC:                     0.9913
+F1 Score:                  0.9333
+Sensitivity (Recall):      0.9231
+Specificity:               0.8837
+Confusion Matrix:
+  TP:   84   FN:    7
+  FP:    5   TN:   38
+
+FROC (False Positives per Scan vs Sensitivity):
+  0.125 FP/scan : 0.8140
+  0.25 FP/scan : 0.8488
+  0.5 FP/scan : 0.9070
+  1 FP/scan  : 0.9477
+  2 FP/scan  : 0.9651
+  4 FP/scan  : 0.9651
+  8 FP/scan  : 1.0000
+====================================================
+
+[Saved] Test predictions exported to 'efficientnetb0_gradcam_test_predictions.csv'
+
+
+
+
+2CNN + MLP Scratch - 
+
+*** Early stopping after epoch 56 ***
+Testing: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 156/156 [00:26<00:00,  5.95it/s]
+  AUROC 95% CI: [0.9600, 0.9995]
+
+─── 2‑BRANCH HYBRID TEST RESULTS ───
+  AUROC: 0.9847   AUPRC: 0.9942
+  F1: 0.9724   Sensitivity: 0.9670   Specificity: 0.9535
+FROC:
+  0.125 FP/scan: 0.9302
+  0.25 FP/scan: 0.9360
+  0.5 FP/scan: 0.9651
+  1 FP/scan: 0.9651
+  2 FP/scan: 0.9826
+  4 FP/scan: 0.9942
+  8 FP/scan: 1.0000
+════════════════════════════════════════
+
+2CNN + MLP Frozen - 
+
+*** Early stopping after epoch 17 ***
+Testing: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 156/156 [00:25<00:00,  6.10it/s]
+  AUROC 95% CI: [0.9899, 1.0000]
+
+─── 2‑BRANCH HYBRID (FROZEN) TEST RESULTS ───
+  AUROC: 0.9974   AUPRC: 0.9989
+  F1: 0.9945   Sensitivity: 0.9890   Specificity: 1.0000
+FROC:
+  0.125 FP/scan: 0.9593
+  0.25 FP/scan: 0.9709
+  0.5 FP/scan: 0.9942
+  1 FP/scan: 0.9942
+  2 FP/scan: 1.0000
+  4 FP/scan: 1.0000
+  8 FP/scan: 1.0000
+════════════════════════════════════════
+
+3CNN + MLP Scratch -
+
+==================================================
+FINAL TEST METRICS (SCAN-LEVEL)
+==================================================
+AUROC: 0.9798 (95% CI 0.9492-0.9992)
+AUPRC: 0.9928  F1: 0.9462  Sens: 0.9670  Spec: 0.8372
+Confusion: TP=88 FN=3 FP=7 TN=36
+FROC:
+  0.125 FP/scan: 0.9070
+  0.25 FP/scan: 0.9186
+  0.5 FP/scan: 0.9535
+  1 FP/scan: 0.9593
+  2 FP/scan: 0.9826
+  4 FP/scan: 0.9942
+  8 FP/scan: 1.0000
+==================================================
+[Saved] Predictions & calibration CSV.
+
+
+
+
+3CNN + MLP Frozen - 
+
+=========================================================
+FINAL TEST METRICS — 3-Branch Hybrid (Frozen)
+=========================================================
+AUROC            : 0.9964  (95% CI: 0.9868–1.0000)
+AUPRC            : 0.9985
+F1               : 0.9945
+Sensitivity      : 0.9890
+Specificity      : 1.0000
+Confusion Matrix : TP=90  FN=1  FP=0  TN=43
+
+FROC (FP/scan → Sensitivity):
+  0.125 FP/scan : 0.9419
+  0.25 FP/scan  : 0.9593
+  0.5 FP/scan   : 0.9884
+  1 FP/scan     : 0.9942
+  2 FP/scan     : 1.0000
+  4 FP/scan     : 1.0000
+  8 FP/scan     : 1.0000
+=========================================================
+
+2CNN + KAN Scratch - 
+
+==================================================
+FINAL TEST METRICS (SCAN-LEVEL)
+==================================================
+AUROC (Primary):           0.9985  (95% CI: 0.9944 - 1.0000)
+AUPRC:                     0.9993
+F1 Score:                  0.9836
+Sensitivity (Recall):      0.9890
+Specificity:               0.9535
+Confusion Matrix:
+  TP:   90   FN:    1
+  FP:    2   TN:   41
+
+FROC (False Positives per Scan vs Sensitivity):
+  0.125 FP/scan : 0.9360
+  0.25 FP/scan : 0.9360
+  0.5 FP/scan : 0.9419
+  1 FP/scan  : 0.9535
+  2 FP/scan  : 0.9826
+  4 FP/scan  : 0.9826
+  8 FP/scan  : 1.0000
+====================================================
+
+
+
+
+2CNN + KAN Frozen - 
+
+==================================================
+FINAL TEST METRICS (SCAN-LEVEL)
+==================================================
+AUROC: 0.9972 (95% CI 0.9894-1.0000)
+AUPRC: 0.9988  F1: 0.9890  Sens: 0.9890  Spec: 0.9767
+Confusion: TP=90 FN=1 FP=1 TN=42
+FROC:
+  0.125 FP/scan: 0.9593
+  0.25 FP/scan: 0.9767
+  0.5 FP/scan: 0.9942
+  1 FP/scan: 0.9942
+  2 FP/scan: 0.9942
+  4 FP/scan: 1.0000
+  8 FP/scan: 1.0000
+==================================================
+[Saved] Predictions & calibration CSV.
+✔ GradCAM target: resnet18.layer3.1
+
+GradCAM cases – TP:90 FN:1 FP:1 TN:42
+
+
+3CNN + KAN scratch - 
+
+==================================================
+FINAL TEST METRICS (SCAN-LEVEL) -- 3CNN KAN SCRATCH
+==================================================
+AUROC (Primary):           0.9990  (95% CI: 0.9957 - 1.0000)
+AUPRC:                     0.9995
+F1 Score:                  0.9730
+Sensitivity (Recall):      0.9890
+Specificity:               0.9070
+Confusion Matrix:
+  TP:   90   FN:    1
+  FP:    4   TN:   39
+
+FROC (False Positives per Scan vs Sensitivity):
+  0.125 FP/scan : 0.9593
+  0.25 FP/scan  : 0.9651
+  0.5 FP/scan   : 0.9767
+  1 FP/scan     : 0.9884
+  2 FP/scan     : 1.0000
+  4 FP/scan     : 1.0000
+  8 FP/scan     : 1.0000
+==================================================
+Model checkpoint loaded: epoch 51 (best_val_auc=1.0000)
+Predictions saved to: 3cnn_kan_scratch_test_predictions.csv
+Calibration curve saved to: 3cnn_kan_scratch_calibration_curve.csv
+
+NOTE: GradCAM++ visualization failed with error:
+Can't call numpy() on Tensor that requires grad. Use tensor.detach().numpy() instead.
+
+
+3CNN + KAN frozen - 
+
+==================================================
+FINAL TEST METRICS (SCAN-LEVEL)
+==================================================
+AUROC: 0.9969 (95% CI 0.9887-1.0000)
+AUPRC: 0.9987  F1: 0.9890  Sens: 0.9890  Spec: 0.9767
+Confusion: TP=90 FN=1 FP=1 TN=42
+FROC:
+  0.125 FP/scan: 0.9593
+  0.25 FP/scan: 0.9767
+  0.5 FP/scan: 0.9942
+  1 FP/scan: 0.9942
+  2 FP/scan: 0.9942
+  4 FP/scan: 1.0000
+  8 FP/scan: 1.0000
+==================================================
+[Saved] Predictions & calibration CSV.
+✔ GradCAM target: resnet18.layer3.1
+
+GradCAM cases – TP:90 FN:1 FP:1 TN:42

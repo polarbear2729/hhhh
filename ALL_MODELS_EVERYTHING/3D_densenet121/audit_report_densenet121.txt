@@ -1,0 +1,75 @@
+======================================================================
+  MODEL AUDIT REPORT — DenseNet121 Lung Nodule Classification
+======================================================================
+  Total Checks : 32
+  Passed       : 31
+  Warnings     : 0
+  Failed       : 1
+
+  [PASS]  File exists: Model weights
+         Found at 'best_model_densenet121.pth' (45569.5 KB)
+  [PASS]  File exists: Test predictions CSV
+         Found at 'densenet121_test_predictions.csv' (105.2 KB)
+  [PASS]  File exists: Training log CSV
+         Found at 'densenet121_training_log.csv' (6.2 KB)
+  [PASS]  File exists: Best metrics JSON
+         Found at 'best_metrics_densenet121.json' (0.2 KB)
+  [PASS]  Weights differ from random init
+         Mean delta=0.087065, r=-0.0738
+  [PASS]  MLP head weights are non-trivial
+         MLP std=0.021309
+  [PASS]  Columns
+         All present. Shape: (1247, 3)
+  [PASS]  No NaN
+         Zero NaN
+  [PASS]  Probs in [0,1]
+         Range: [0.0120, 0.9985]
+  [PASS]  Labels binary
+         Pos=172, Neg=1075
+  [PASS]  Not collapsed
+         Prob std=0.3233, mean=0.2033
+  [PASS]  Both classes
+         Both present
+  [PASS]  AUROC recomputable
+         AUC=0.9905
+  [PASS]  AUPRC recomputable
+         AUPRC=0.9958
+  [PASS]  AUROC sanity
+         0.9905 plausible
+  [PASS]  Sensitivity
+         0.9560
+  [PASS]  Epochs enough
+         40 epochs recorded
+  [PASS]  Train loss decreased
+         1.1555 → 0.1940
+  [PASS]  Val AUC improved
+         0.6202 → 0.9965
+  [PASS]  Loss not flat
+         std=0.338216
+  [PASS]  Val AUC realistic
+         std=0.1260
+  [FAIL]  Live vs saved match
+         Only 23/50 match, max diff=0.512558
+  [PASS]  Live AUROC on sample
+         Live AUROC on 50 samples = 0.9554
+  [PASS]  No overlap: Train ∩ Val
+         Zero overlap
+  [PASS]  No overlap: Train ∩ Test
+         Zero overlap
+  [PASS]  No overlap: Val ∩ Test
+         Zero overlap
+  [PASS]  Class distribution train
+         Pos=822, Neg=5115, Pos%=13.8%
+  [PASS]  Class distribution val
+         Pos=192, Neg=1175, Pos%=14.0%
+  [PASS]  Class distribution test
+         Pos=172, Neg=1075, Pos%=13.8%
+  [PASS]  Permutation test
+         p=0.0000, beats 100.0% of random
+  [PASS]  Pos > Neg scores
+         Pos mean=0.9097 > Neg mean=0.0903, p=1.32e-91
+  [PASS]  Grad‑CAM++ images saved
+         Saved to gradcam_densenet121_audit/
+======================================================================
+  VERDICT: AUDIT FAILED — 1 critical issue(s) found ❌
+======================================================================

@@ -1,0 +1,63 @@
+======================================================================
+  HYBRID2 + KAN (FROZEN) AUDIT REPORT
+======================================================================
+  Checks: 28 | Passed: 28 | Warnings: 0 | Failed: 0
+  [PASS] File: Model
+         Found (210120.8 KB)
+  [PASS] File: Predictions
+         Found (111.2 KB)
+  [PASS] File: Training log
+         Found (2.7 KB)
+  [PASS] File: Best metrics
+         Found (0.2 KB)
+  [PASS] KAN weights differ from random
+         Mean delta=0.017200, r=-0.0069
+  [PASS] Backbones frozen
+         All backbone parameters have requires_grad=False
+  [PASS] CSV columns
+         Shape (1247, 3)
+  [PASS] NaN values
+         None
+  [PASS] Prob range
+         [0.0000, 1.0000]
+  [PASS] Both classes present
+         Pos=172.0, Neg=1075.0
+  [PASS] Predictions varied
+         std=0.3444
+  [PASS] AUC recomputable
+         0.9969
+  [PASS] AUC range
+         0.9969 plausible
+  [PASS] Sensitivity valid
+         0.9890
+  [PASS] Epochs logged
+         19
+  [PASS] Loss decreased
+         0.1932→0.1059
+  [PASS] AUROC improved
+         0.9985→0.9990
+  [PASS] Loss varied
+         std=0.060424
+  [PASS] UID order
+         Matches
+  [PASS] Probabilities match
+         All match, max diff 0.00112590
+  [PASS] No overlap: Train∩Val
+         Zero overlap
+  [PASS] No overlap: Train∩Test
+         Zero overlap
+  [PASS] No overlap: Val∩Test
+         Zero overlap
+  [PASS] Class balance train
+         Pos=822 Neg=5115 Ratio=13.8%
+  [PASS] Class balance val
+         Pos=192 Neg=1175 Ratio=14.0%
+  [PASS] Class balance test
+         Pos=172 Neg=1075 Ratio=13.8%
+  [PASS] Permutation p<0.05
+         p=0.0000
+  [PASS] Pos > Neg scores
+         p=2.38e-97
+======================================================================
+  VERDICT: LEGITIMATE ✅
+======================================================================

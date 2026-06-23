@@ -1,0 +1,149 @@
+{
+    "total": 28,
+    "passed": 28,
+    "warned": 0,
+    "failed": 0,
+    "verdict": "LEGITIMATE",
+    "checks": [
+        {
+            "check": "File: Model",
+            "status": "PASS",
+            "detail": "Found (210120.8 KB)"
+        },
+        {
+            "check": "File: Predictions",
+            "status": "PASS",
+            "detail": "Found (110.7 KB)"
+        },
+        {
+            "check": "File: Training log",
+            "status": "PASS",
+            "detail": "Found (2.6 KB)"
+        },
+        {
+            "check": "File: Best metrics",
+            "status": "PASS",
+            "detail": "Found (0.2 KB)"
+        },
+        {
+            "check": "KAN weights differ from random",
+            "status": "PASS",
+            "detail": "Mean delta=0.017154, r=-0.0046"
+        },
+        {
+            "check": "Backbones frozen",
+            "status": "PASS",
+            "detail": "All backbone parameters have requires_grad=False"
+        },
+        {
+            "check": "CSV columns",
+            "status": "PASS",
+            "detail": "Shape (1247, 3)"
+        },
+        {
+            "check": "NaN values",
+            "status": "PASS",
+            "detail": "None"
+        },
+        {
+            "check": "Prob range",
+            "status": "PASS",
+            "detail": "[0.0001, 1.0000]"
+        },
+        {
+            "check": "Both classes",
+            "status": "PASS",
+            "detail": "Pos=172.0, Neg=1075.0"
+        },
+        {
+            "check": "Varied predictions",
+            "status": "PASS",
+            "detail": "std=0.3452"
+        },
+        {
+            "check": "AUC recomputable",
+            "status": "PASS",
+            "detail": "0.9972"
+        },
+        {
+            "check": "AUC range",
+            "status": "PASS",
+            "detail": "0.9972 plausible"
+        },
+        {
+            "check": "Sensitivity valid",
+            "status": "PASS",
+            "detail": "0.9890"
+        },
+        {
+            "check": "Epochs",
+            "status": "PASS",
+            "detail": "18"
+        },
+        {
+            "check": "Loss decreased",
+            "status": "PASS",
+            "detail": "0.1941\u21920.1082"
+        },
+        {
+            "check": "AUROC improved",
+            "status": "PASS",
+            "detail": "0.9984\u21920.9987"
+        },
+        {
+            "check": "Loss varied",
+            "status": "PASS",
+            "detail": "std=0.060928"
+        },
+        {
+            "check": "UID order",
+            "status": "PASS",
+            "detail": "Matches"
+        },
+        {
+            "check": "Probabilities match",
+            "status": "PASS",
+            "detail": "All match, max diff 0.00098801"
+        },
+        {
+            "check": "No overlap: Train\u2229Val",
+            "status": "PASS",
+            "detail": "Zero overlap"
+        },
+        {
+            "check": "No overlap: Train\u2229Test",
+            "status": "PASS",
+            "detail": "Zero overlap"
+        },
+        {
+            "check": "No overlap: Val\u2229Test",
+            "status": "PASS",
+            "detail": "Zero overlap"
+        },
+        {
+            "check": "Class balance train",
+            "status": "PASS",
+            "detail": "Pos=822 Neg=5115 Ratio=13.8%"
+        },
+        {
+            "check": "Class balance val",
+            "status": "PASS",
+            "detail": "Pos=192 Neg=1175 Ratio=14.0%"
+        },
+        {
+            "check": "Class balance test",
+            "status": "PASS",
+            "detail": "Pos=172 Neg=1075 Ratio=13.8%"
+        },
+        {
+            "check": "Permutation p<0.05",
+            "status": "PASS",
+            "detail": "p=0.0000"
+        },
+        {
+            "check": "Pos > Neg scores",
+            "status": "PASS",
+            "detail": "p=3.71e-97"
+        }
+    ]
+}

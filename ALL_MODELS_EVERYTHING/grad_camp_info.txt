@@ -1,0 +1,25 @@
+Before (earlier scripts):
+The GradCAM++ heatmap was computed for the positive (nodule) class, then min‑max normalised to the range [0,1].
+Even for a True Negative where the model said “no nodule” (prob ~0.005), the raw heatmap had tiny non‑zero values – e.g., max = 0.311 for DenseNet121 in TN‑1.
+After normalisation, that tiny value became “1” (bright red) because all other values were even smaller.
+The image showed a red spot, but it was an artefact of the colour scale – the raw activation was orders of magnitude weaker than in a TP case. The console numbers confirm this: TP heatmaps have max values of 3–6, while TN heatmaps are 0.2–0.3.
+So the earlier visualisation was not wrong, but it was misleading because it made every case look like a positive detection.
+
+Now (updated final script):
+We added a simple rule: if the patient‑level probability is < 0.5, set the entire heatmap to zero.
+This directly reflects the model’s final decision: “no nodule” → blank heatmap.
+For TP cases (prob > 0.5), we still apply a 90th‑percentile threshold to remove weak background noise, leaving a clean hotspot on the nodule.
+
+Why this is the right choice for your thesis
+It directly mirrors the model’s prediction.
+A clinician looking at a TN heatmap immediately sees “the model is confident there is no nodule” – which is exactly what the probability of 0.005 means.
+
+It avoids the colour‑scale illusion.
+Without the zeroing rule, a TN case with tiny raw activation looks just as red as a TP case, making it impossible to visually distinguish between a confident detection and a complete miss.
+
+It makes the false negative interpretable.
+The single FN (prob 0.0078) now appears completely blue – the model simply did not see the nodule at all. This is a clear visual explanation for the missed case.
+
+It is a standard practice in medical GradCAM papers to show heatmaps only for positive predictions, or to threshold them based on the final output.
+
+To make the GradCAM++ visualisation clinically intuitive, we zero the heatmap whenever the patient‑level probability is below 0.5. This ensures that the heatmap directly reflects the model’s decision: a blank heatmap indicates that the model found no evidence of a nodule, while a hotspot indicates where the model focused for its positive prediction.

@@ -1,0 +1,169 @@
+{
+    "total": 32,
+    "passed": 31,
+    "warned": 0,
+    "failed": 1,
+    "verdict": "FAILED",
+    "checks": [
+        {
+            "check": "File exists: Model weights",
+            "status": "PASS",
+            "detail": "Found at 'best_model_densenet121.pth' (45569.5 KB)"
+        },
+        {
+            "check": "File exists: Test predictions CSV",
+            "status": "PASS",
+            "detail": "Found at 'densenet121_test_predictions.csv' (105.2 KB)"
+        },
+        {
+            "check": "File exists: Training log CSV",
+            "status": "PASS",
+            "detail": "Found at 'densenet121_training_log.csv' (6.2 KB)"
+        },
+        {
+            "check": "File exists: Best metrics JSON",
+            "status": "PASS",
+            "detail": "Found at 'best_metrics_densenet121.json' (0.2 KB)"
+        },
+        {
+            "check": "Weights differ from random init",
+            "status": "PASS",
+            "detail": "Mean delta=0.087065, r=-0.0738"
+        },
+        {
+            "check": "MLP head weights are non-trivial",
+            "status": "PASS",
+            "detail": "MLP std=0.021309"
+        },
+        {
+            "check": "Columns",
+            "status": "PASS",
+            "detail": "All present. Shape: (1247, 3)"
+        },
+        {
+            "check": "No NaN",
+            "status": "PASS",
+            "detail": "Zero NaN"
+        },
+        {
+            "check": "Probs in [0,1]",
+            "status": "PASS",
+            "detail": "Range: [0.0120, 0.9985]"
+        },
+        {
+            "check": "Labels binary",
+            "status": "PASS",
+            "detail": "Pos=172, Neg=1075"
+        },
+        {
+            "check": "Not collapsed",
+            "status": "PASS",
+            "detail": "Prob std=0.3233, mean=0.2033"
+        },
+        {
+            "check": "Both classes",
+            "status": "PASS",
+            "detail": "Both present"
+        },
+        {
+            "check": "AUROC recomputable",
+            "status": "PASS",
+            "detail": "AUC=0.9905"
+        },
+        {
+            "check": "AUPRC recomputable",
+            "status": "PASS",
+            "detail": "AUPRC=0.9958"
+        },
+        {
+            "check": "AUROC sanity",
+            "status": "PASS",
+            "detail": "0.9905 plausible"
+        },
+        {
+            "check": "Sensitivity",
+            "status": "PASS",
+            "detail": "0.9560"
+        },
+        {
+            "check": "Epochs enough",
+            "status": "PASS",
+            "detail": "40 epochs recorded"
+        },
+        {
+            "check": "Train loss decreased",
+            "status": "PASS",
+            "detail": "1.1555 \u2192 0.1940"
+        },
+        {
+            "check": "Val AUC improved",
+            "status": "PASS",
+            "detail": "0.6202 \u2192 0.9965"
+        },
+        {
+            "check": "Loss not flat",
+            "status": "PASS",
+            "detail": "std=0.338216"
+        },
+        {
+            "check": "Val AUC realistic",
+            "status": "PASS",
+            "detail": "std=0.1260"
+        },
+        {
+            "check": "Live vs saved match",
+            "status": "FAIL",
+            "detail": "Only 23/50 match, max diff=0.512558"
+        },
+        {
+            "check": "Live AUROC on sample",
+            "status": "PASS",
+            "detail": "Live AUROC on 50 samples = 0.9554"
+        },
+        {
+            "check": "No overlap: Train \u2229 Val",
+            "status": "PASS",
+            "detail": "Zero overlap"
+        },
+        {
+            "check": "No overlap: Train \u2229 Test",
+            "status": "PASS",
+            "detail": "Zero overlap"
+        },
+        {
+            "check": "No overlap: Val \u2229 Test",
+            "status": "PASS",
+            "detail": "Zero overlap"
+        },
+        {
+            "check": "Class distribution train",
+            "status": "PASS",
+            "detail": "Pos=822, Neg=5115, Pos%=13.8%"
+        },
+        {
+            "check": "Class distribution val",
+            "status": "PASS",
+            "detail": "Pos=192, Neg=1175, Pos%=14.0%"
+        },
+        {
+            "check": "Class distribution test",
+            "status": "PASS",
+            "detail": "Pos=172, Neg=1075, Pos%=13.8%"
+        },
+        {
+            "check": "Permutation test",
+            "status": "PASS",
+            "detail": "p=0.0000, beats 100.0% of random"
+        },
+        {
+            "check": "Pos > Neg scores",
+            "status": "PASS",
+            "detail": "Pos mean=0.9097 > Neg mean=0.0903, p=1.32e-91"
+        },
+        {
+            "check": "Grad\u2011CAM++ images saved",
+            "status": "PASS",
+            "detail": "Saved to gradcam_densenet121_audit/"
+        }
+    ]
+}
