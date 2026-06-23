@@ -1,0 +1,73 @@
+======================================================================
+  MODEL AUDIT REPORT — 3D MedNeXt Lung Nodule Classification
+======================================================================
+  Total Checks : 31
+  Passed       : 31
+  Warnings     : 0
+  Failed       : 0
+
+  [PASS]  File exists: Model weights
+         Found at 'best_model_mednext3d.pth' (3335.8 KB)
+  [PASS]  File exists: Test predictions CSV
+         Found at 'mednext3d_test_predictions.csv' (104.6 KB)
+  [PASS]  File exists: Training log CSV
+         Found at 'mednext3d_training_log.csv' (12.3 KB)
+  [PASS]  File exists: Best metrics JSON
+         Found at 'best_metrics_mednext3d.json' (0.2 KB)
+  [PASS]  Weights differ from random init
+         Mean weight delta=0.082584, Pearson r=0.0508 vs random
+  [PASS]  MLP head weights are non-trivial
+         MLP head weight std=0.042210 — looks trained
+  [PASS]  Predictions CSV columns
+         All required columns present. Shape: (1247, 3)
+  [PASS]  No NaN values
+         Zero NaN values
+  [PASS]  Probabilities in [0,1]
+         Range: [0.0097, 0.9995]
+  [PASS]  Labels are binary
+         Positive patches: 172, Negative patches: 1075
+  [PASS]  Predictions are not collapsed
+         Probability std=0.3223, mean=0.2536
+  [PASS]  Both classes in test set
+         Both positive and negative samples present in test set
+  [PASS]  AUROC recomputable from predictions
+         Recomputed AUROC=0.9537 from saved CSV successfully
+  [PASS]  AUPRC recomputable from predictions
+         Recomputed AUPRC=0.9800 from saved CSV successfully
+  [PASS]  AUROC sanity range
+         AUROC=0.9537 is in plausible range [0.5, 0.999]
+  [PASS]  Sensitivity in valid range
+         Sensitivity=0.9560
+  [PASS]  Training log has enough epochs
+         82 epochs recorded
+  [PASS]  Training loss decreased
+         Loss: 1.2094 (first 3 epochs avg) → 0.3439 (last 3 epochs avg)
+  [PASS]  Val AUROC improved over training
+         Val AUROC: 0.6359 (first 3 avg) → 0.9788 (best)
+  [PASS]  Training loss is not flat
+         Train loss std=0.295866 — loss varied across epochs
+  [PASS]  Val AUROC variance is realistic
+         Val AUROC std=0.1177 across epochs — natural variation present
+  [PASS]  Live inference matches saved predictions
+         All 1247 probabilities match within tolerance. Max diff=0.00000000
+  [PASS]  Live inference AUROC on test set
+         AUROC from live inference = 0.9563
+  [PASS]  No overlap: Train ∩ Val
+         Zero patients shared between Train ∩ Val
+  [PASS]  No overlap: Train ∩ Test
+         Zero patients shared between Train ∩ Test
+  [PASS]  No overlap: Val ∩ Test
+         Zero patients shared between Val ∩ Test
+  [PASS]  Class distribution in train
+         Pos=822, Neg=5115, Pos%=13.8%
+  [PASS]  Class distribution in val
+         Pos=192, Neg=1175, Pos%=14.0%
+  [PASS]  Class distribution in test
+         Pos=172, Neg=1075, Pos%=13.8%
+  [PASS]  Permutation test (p < 0.05)
+         Real AUROC=0.9537 significantly beats random (p=0.0000, beats 100.0% of permutations)
+  [PASS]  Positive scores > Negative scores
+         Pos mean=0.8543 > Neg mean=0.1576, Mann-Whitney p=8.58e-83
+======================================================================
+  VERDICT: RESULTS ARE LEGITIMATE ✅
+======================================================================

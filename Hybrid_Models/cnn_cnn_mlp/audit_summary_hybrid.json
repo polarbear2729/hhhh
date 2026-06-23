@@ -1,0 +1,154 @@
+{
+    "total": 29,
+    "passed": 29,
+    "warned": 0,
+    "failed": 0,
+    "verdict": "LEGITIMATE",
+    "checks": [
+        {
+            "check": "File: Model",
+            "status": "PASS",
+            "detail": "Found (211173.7 KB)"
+        },
+        {
+            "check": "File: Predictions",
+            "status": "PASS",
+            "detail": "Found (107.1 KB)"
+        },
+        {
+            "check": "File: Training log",
+            "status": "PASS",
+            "detail": "Found (9.2 KB)"
+        },
+        {
+            "check": "File: Best metrics",
+            "status": "PASS",
+            "detail": "Found (0.2 KB)"
+        },
+        {
+            "check": "Weights differ from random",
+            "status": "PASS",
+            "detail": "Mean delta=0.013492, r=0.0108"
+        },
+        {
+            "check": "MLP head trained",
+            "status": "PASS",
+            "detail": "std=0.016820"
+        },
+        {
+            "check": "CSV columns",
+            "status": "PASS",
+            "detail": "Shape (1247, 3)"
+        },
+        {
+            "check": "NaN values",
+            "status": "PASS",
+            "detail": "None"
+        },
+        {
+            "check": "Prob range [0,1]",
+            "status": "PASS",
+            "detail": "[0.0070, 0.9990]"
+        },
+        {
+            "check": "Both classes present",
+            "status": "PASS",
+            "detail": "Pos=172.0, Neg=1075.0"
+        },
+        {
+            "check": "Predictions varied",
+            "status": "PASS",
+            "detail": "std=0.3400"
+        },
+        {
+            "check": "AUC recomputable",
+            "status": "PASS",
+            "detail": "0.9798"
+        },
+        {
+            "check": "AUPRC recomputable",
+            "status": "PASS",
+            "detail": "0.9928"
+        },
+        {
+            "check": "AUC range",
+            "status": "PASS",
+            "detail": "0.9798 plausible"
+        },
+        {
+            "check": "Sensitivity valid",
+            "status": "PASS",
+            "detail": "0.9670"
+        },
+        {
+            "check": "Epochs logged",
+            "status": "PASS",
+            "detail": "60"
+        },
+        {
+            "check": "Loss decreased",
+            "status": "PASS",
+            "detail": "1.1965\u21920.1352"
+        },
+        {
+            "check": "AUROC improved",
+            "status": "PASS",
+            "detail": "0.6173\u21920.9992"
+        },
+        {
+            "check": "Loss varied",
+            "status": "PASS",
+            "detail": "std=0.332306"
+        },
+        {
+            "check": "UID order",
+            "status": "PASS",
+            "detail": "Matches"
+        },
+        {
+            "check": "Probabilities match",
+            "status": "PASS",
+            "detail": "All match, max diff 0.00222814"
+        },
+        {
+            "check": "No overlap: Train\u2229Val",
+            "status": "PASS",
+            "detail": "Zero overlap"
+        },
+        {
+            "check": "No overlap: Train\u2229Test",
+            "status": "PASS",
+            "detail": "Zero overlap"
+        },
+        {
+            "check": "No overlap: Val\u2229Test",
+            "status": "PASS",
+            "detail": "Zero overlap"
+        },
+        {
+            "check": "Class balance train",
+            "status": "PASS",
+            "detail": "Pos=822 Neg=5115 Ratio=13.8%"
+        },
+        {
+            "check": "Class balance val",
+            "status": "PASS",
+            "detail": "Pos=192 Neg=1175 Ratio=14.0%"
+        },
+        {
+            "check": "Class balance test",
+            "status": "PASS",
+            "detail": "Pos=172 Neg=1075 Ratio=13.8%"
+        },
+        {
+            "check": "Permutation p<0.05",
+            "status": "PASS",
+            "detail": "p=0.0000"
+        },
+        {
+            "check": "Pos > Neg scores",
+            "status": "PASS",
+            "detail": "p=1.07e-92"
+        }
+    ]
+}

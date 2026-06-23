@@ -1,0 +1,604 @@
+"""
+3D EfficientNet-B0 with MLP Head for Lung Nodule Classification
+Identical configuration to DenseNet121 script — only the model changes.
+
+NOTE ON EFFICIENTNET IN 3D:
+    MONAI does not ship a native 3D EfficientNet.
+    We use a clean 3D re-implementation that faithfully ports the
+    EfficientNet-B0 MBConv block structure into 3D using nn.Conv3d,
+    nn.BatchNorm3d, and Squeeze-and-Excitation in 3D.
+    All scaling coefficients (width=1.0, depth=1.0, resolution=224)
+    are kept identical to the original B0 specification.
+    The final feature dimension is 1280 (same as 2D EfficientNet-B0).
+"""
+
+import os
+import json
+import random
+import math
+import numpy as np
+import pandas as pd
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import Dataset, DataLoader
+from torch.amp import autocast, GradScaler
+from torch.optim.lr_scheduler import SequentialLR, LinearLR, CosineAnnealingLR
+from sklearn.metrics import roc_auc_score, average_precision_score, f1_score, confusion_matrix, recall_score
+from monai.transforms import Compose, RandRotate90, RandFlip, RandGaussianNoise, RandAffine
+import warnings
+from tqdm import tqdm
+
+warnings.filterwarnings("ignore")
+
+# ------------------------------ Configuration ------------------------------
+# UNCHANGED — identical to DenseNet121 script
+SEED = 42
+DATA_DIR = r"C:\Users\T2520789\LUNGCANCER3D\data"
+METADATA_PATH = os.path.join(DATA_DIR, "metadata_all.csv")
+PATIENT_SPLIT_PATH = os.path.join(DATA_DIR, "patient_split.csv")
+
+BATCH_SIZE = 8
+NUM_WORKERS = 4
+PIN_MEMORY = True
+PERSISTENT_WORKERS = True
+
+MAX_EPOCHS = 100
+EARLY_STOPPING_PATIENCE = 15
+LR = 1e-4
+WEIGHT_DECAY = 1e-4
+POS_WEIGHT = 5115.0 / 822.0
+
+FROC_THRESHOLDS = [0.125, 0.25, 0.5, 1, 2, 4, 8]
+
+# EfficientNet-B0 final feature dimension (identical to 2D version)
+EFFICIENTNET_FEATURE_DIM = 1280
+
+# ------------------------------ Reproducibility ------------------------------
+def set_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+# ------------------------------ Dataset ------------------------------
+# UNCHANGED — identical to DenseNet121 script
+class NodulePatchDataset(Dataset):
+    def __init__(self, metadata_df, data_dir, transforms=None):
+        self.metadata = metadata_df.reset_index(drop=True)
+        self.data_dir = data_dir
+        self.transforms = transforms
+
+    def __len__(self):
+        return len(self.metadata)
+
+    def __getitem__(self, idx):
+        row = self.metadata.iloc[idx]
+        filename = os.path.basename(row["filepath"])
+        split = row["split"]
+        label = int(row["label"])
+        subfolder = "pos" if label == 1 else "neg"
+
+        local_path = os.path.join(self.data_dir, split, subfolder, filename)
+        patch = np.load(local_path).astype(np.float32)
+        patch = np.expand_dims(patch, axis=0)
+
+        if self.transforms is not None:
+            patch = self.transforms(patch)
+
+        if not isinstance(patch, torch.Tensor):
+            patch = torch.from_numpy(patch)
+
+        return patch, torch.tensor(label, dtype=torch.float32), row["seriesuid"]
+
+# ------------------------------ 3D EfficientNet-B0 Implementation ------------------------------
+
+def _make_divisible(v, divisor, min_value=None):
+    """Ensures channel counts are divisible by divisor (required by SE blocks)."""
+    if min_value is None:
+        min_value = divisor
+    new_v = max(min_value, int(v + divisor / 2) // divisor * divisor)
+    if new_v < 0.9 * v:
+        new_v += divisor
+    return new_v
+
+
+class SwishActivation(nn.Module):
+    """Swish activation: x * sigmoid(x). Used in EfficientNet."""
+    def forward(self, x):
+        return x * torch.sigmoid(x)
+
+
+class SqueezeExcitation3D(nn.Module):
+    """
+    3D Squeeze-and-Excitation block.
+    Channels are squeezed via 3D global average pooling,
+    then excited via two FC layers with Swish and Sigmoid.
+    """
+    def __init__(self, in_channels, se_ratio=0.25):
+        super().__init__()
+        se_channels = max(1, int(in_channels * se_ratio))
+        self.se = nn.Sequential(
+            nn.AdaptiveAvgPool3d(1),
+            nn.Flatten(),
+            nn.Linear(in_channels, se_channels),
+            SwishActivation(),
+            nn.Linear(se_channels, in_channels),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        scale = self.se(x).view(x.size(0), x.size(1), 1, 1, 1)
+        return x * scale
+
+
+class MBConv3D(nn.Module):
+    """
+    3D Mobile Inverted Bottleneck Convolution (MBConv) block.
+
+    Structure:
+        [Expand] Pointwise conv to expand channels (if expand_ratio > 1)
+        [Depthwise] 3D depthwise conv
+        [SE] 3D Squeeze-and-Excitation
+        [Project] Pointwise conv to project back to output channels
+        [Skip] Residual connection if stride=1 and in==out channels
+
+    Stochastic depth (drop_connect) is applied during training.
+    """
+    def __init__(self, in_channels, out_channels, kernel_size, stride,
+                 expand_ratio, se_ratio=0.25, drop_connect_rate=0.2):
+        super().__init__()
+        self.use_skip = (stride == 1 and in_channels == out_channels)
+        self.drop_connect_rate = drop_connect_rate
+
+        mid_channels = _make_divisible(in_channels * expand_ratio, 8)
+        layers = []
+
+        # Expansion phase (skip if ratio == 1)
+        if expand_ratio != 1:
+            layers += [
+                nn.Conv3d(in_channels, mid_channels, 1, bias=False),
+                nn.BatchNorm3d(mid_channels, momentum=0.01, eps=1e-3),
+                SwishActivation()
+            ]
+
+        # Depthwise convolution
+        pad = (kernel_size - 1) // 2
+        layers += [
+            nn.Conv3d(mid_channels, mid_channels, kernel_size,
+                      stride=stride, padding=pad, groups=mid_channels, bias=False),
+            nn.BatchNorm3d(mid_channels, momentum=0.01, eps=1e-3),
+            SwishActivation()
+        ]
+
+        # Squeeze-and-Excitation
+        layers.append(SqueezeExcitation3D(mid_channels, se_ratio))
+
+        # Projection
+        layers += [
+            nn.Conv3d(mid_channels, out_channels, 1, bias=False),
+            nn.BatchNorm3d(out_channels, momentum=0.01, eps=1e-3)
+        ]
+
+        self.block = nn.Sequential(*layers)
+
+    def forward(self, x):
+        out = self.block(x)
+        if self.use_skip:
+            # Stochastic depth during training
+            if self.training and self.drop_connect_rate > 0:
+                keep_prob = 1 - self.drop_connect_rate
+                rand_tensor = torch.rand(x.size(0), 1, 1, 1, 1, device=x.device)
+                rand_tensor = torch.floor(rand_tensor + keep_prob)
+                out = out / keep_prob * rand_tensor
+            out = out + x
+        return out
+
+
+class EfficientNet3D_B0(nn.Module):
+    """
+    3D EfficientNet-B0 backbone.
+
+    Block configuration mirrors the original 2D EfficientNet-B0:
+        Stage | Operator    | Stride | Channels | Layers
+        ------+-------------+--------+----------+-------
+        1     | MBConv1_3x3 |   1    |   16     |   1
+        2     | MBConv6_3x3 |   2    |   24     |   2
+        3     | MBConv6_5x5 |   2    |   40     |   2
+        4     | MBConv6_3x3 |   2    |   80     |   3
+        5     | MBConv6_5x5 |   1    |   112    |   3
+        6     | MBConv6_5x5 |   2    |   192    |   4
+        7     | MBConv6_3x3 |   1    |   320    |   1
+
+    Followed by: Conv1x1 → BN → Swish → GlobalAvgPool3D → 1280-d features
+    """
+    def __init__(self, in_channels=1):
+        super().__init__()
+
+        # Stem
+        self.stem = nn.Sequential(
+            nn.Conv3d(in_channels, 32, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.BatchNorm3d(32, momentum=0.01, eps=1e-3),
+            SwishActivation()
+        )
+
+        # MBConv stages: (in_ch, out_ch, kernel, stride, expand_ratio, num_layers)
+        stage_configs = [
+            (32,  16,  3, 1, 1, 1),
+            (16,  24,  3, 2, 6, 2),
+            (24,  40,  5, 2, 6, 2),
+            (40,  80,  3, 2, 6, 3),
+            (80,  112, 5, 1, 6, 3),
+            (112, 192, 5, 2, 6, 4),
+            (192, 320, 3, 1, 6, 1),
+        ]
+
+        # Total blocks for stochastic depth scheduling
+        total_blocks = sum(cfg[5] for cfg in stage_configs)
+        block_idx = 0
+
+        stages = []
+        for (in_ch, out_ch, k, s, expand, n_layers) in stage_configs:
+            stage = []
+            for i in range(n_layers):
+                # First layer of each stage uses the defined stride and in_channels
+                # Subsequent layers always use stride=1 and out_channels as input
+                stride = s if i == 0 else 1
+                inch = in_ch if i == 0 else out_ch
+                drop_rate = 0.2 * block_idx / total_blocks
+                stage.append(MBConv3D(inch, out_ch, k, stride, expand,
+                                      drop_connect_rate=drop_rate))
+                block_idx += 1
+            stages.append(nn.Sequential(*stage))
+
+        self.stages = nn.Sequential(*stages)
+
+        # Head conv: projects to 1280 features
+        self.head_conv = nn.Sequential(
+            nn.Conv3d(320, EFFICIENTNET_FEATURE_DIM, kernel_size=1, bias=False),
+            nn.BatchNorm3d(EFFICIENTNET_FEATURE_DIM, momentum=0.01, eps=1e-3),
+            SwishActivation()
+        )
+
+        self.global_pool = nn.AdaptiveAvgPool3d(1)
+        self._initialize_weights()
+
+    def _initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv3d):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                if m.bias is not None:
+                    nn.init.zeros_(m.bias)
+            elif isinstance(m, nn.BatchNorm3d):
+                nn.init.ones_(m.weight)
+                nn.init.zeros_(m.bias)
+            elif isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+                if m.bias is not None:
+                    nn.init.zeros_(m.bias)
+
+    def forward(self, x):
+        x = self.stem(x)
+        x = self.stages(x)
+        x = self.head_conv(x)
+        x = self.global_pool(x)
+        x = x.flatten(1)   # (B, 1280)
+        return x
+
+
+class EfficientNetB0WithMLPHead(nn.Module):
+    """
+    3D EfficientNet-B0 backbone + MLP classification head.
+
+    MLP head mirrors DenseNet121 exactly:
+        Linear(1280 → 256) → LayerNorm → ReLU → Dropout(0.5) → Linear(256 → 1)
+    """
+    def __init__(self, in_channels=1, num_classes=1, dropout=0.5):
+        super().__init__()
+        self.backbone = EfficientNet3D_B0(in_channels=in_channels)
+        self.mlp_head = nn.Sequential(
+            nn.Linear(EFFICIENTNET_FEATURE_DIM, 256),
+            nn.LayerNorm(256),
+            nn.ReLU(inplace=True),
+            nn.Dropout(dropout),
+            nn.Linear(256, num_classes)
+        )
+
+    def forward(self, x):
+        features = self.backbone(x)     # (B, 1280)
+        out = self.mlp_head(features)   # (B, 1)
+        return out.squeeze(1)           # (B,)
+
+# ------------------------------ Evaluation Metrics ------------------------------
+from sklearn.calibration import calibration_curve
+
+# UNCHANGED — identical to DenseNet121 script
+def calculate_candidate_froc(all_labels, all_probs, total_scans):
+    all_labels = np.array(all_labels)
+    all_probs = np.array(all_probs)
+
+    total_positives = (all_labels == 1).sum()
+    descending_indices = np.argsort(all_probs)[::-1]
+    sorted_labels = all_labels[descending_indices]
+
+    tps = np.cumsum(sorted_labels == 1)
+    fps = np.cumsum(sorted_labels == 0)
+
+    fps_per_scan = fps / total_scans
+    sensitivity = tps / total_positives
+
+    froc_scores = {}
+    for target in FROC_THRESHOLDS:
+        valid_idx = np.where(fps_per_scan <= target)[0]
+        sens = sensitivity[valid_idx[-1]] if len(valid_idx) > 0 else 0.0
+        froc_scores[f"{target} FP/scan"] = sens
+
+    return froc_scores
+
+
+def calculate_95_ci(y_true, y_probs, n_bootstraps=1000):
+    bootstrapped_scores = []
+    rng = np.random.RandomState(SEED)
+
+    for _ in range(n_bootstraps):
+        indices = rng.randint(0, len(y_probs), len(y_probs))
+        if len(np.unique(np.array(y_true)[indices])) < 2:
+            continue
+        score = roc_auc_score(np.array(y_true)[indices], np.array(y_probs)[indices])
+        bootstrapped_scores.append(score)
+
+    sorted_scores = np.sort(np.array(bootstrapped_scores))
+    return np.percentile(sorted_scores, 2.5), np.percentile(sorted_scores, 97.5)
+
+
+def evaluate_model(loader, model, device, desc="Validating", return_preds=False):
+    model.eval()
+    all_probs, all_labels, all_uids = [], [], []
+    running_loss = 0.0
+    criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([POS_WEIGHT]).to(device))
+
+    with torch.no_grad():
+        for patches, labels, uids in tqdm(loader, desc=desc):
+            patches, labels = patches.to(device), labels.to(device)
+            with autocast('cuda'):
+                logits = model(patches)
+                loss = criterion(logits, labels)
+
+            probs = torch.sigmoid(logits).cpu().numpy()
+
+            if probs.ndim == 0:
+                probs, labels = [float(probs)], [float(labels.cpu())]
+            else:
+                probs, labels = probs.tolist(), labels.cpu().tolist()
+
+            all_probs.extend(probs)
+            all_labels.extend(labels)
+            all_uids.extend(uids)
+            running_loss += loss.item() * patches.size(0)
+
+    # Patient-level aggregation
+    patient_dict = {}
+    for prob, label, uid in zip(all_probs, all_labels, all_uids):
+        if uid not in patient_dict:
+            patient_dict[uid] = {'prob': prob, 'label': label}
+        else:
+            patient_dict[uid]['prob'] = max(patient_dict[uid]['prob'], prob)
+            patient_dict[uid]['label'] = max(patient_dict[uid]['label'], label)
+
+    y_true_patient = [v['label'] for v in patient_dict.values()]
+    y_probs_patient = [v['prob'] for v in patient_dict.values()]
+    y_pred_patient = [1 if p >= 0.5 else 0 for p in y_probs_patient]
+    total_scans = len(patient_dict)
+
+    avg_loss = running_loss / len(loader.dataset)
+
+    auc = roc_auc_score(y_true_patient, y_probs_patient) if len(np.unique(y_true_patient)) > 1 else 0.5
+    auprc = average_precision_score(y_true_patient, y_probs_patient)
+    f1 = f1_score(y_true_patient, y_pred_patient)
+    sens = recall_score(y_true_patient, y_pred_patient)
+
+    cm = confusion_matrix(y_true_patient, y_pred_patient, labels=[0, 1])
+    tn, fp, fn, tp = cm.ravel()
+    spec = tn / (tn + fp) if (tn + fp) > 0 else 0
+
+    froc = calculate_candidate_froc(all_labels, all_probs, total_scans)
+
+    if return_preds:
+        ci_lower, ci_upper = calculate_95_ci(y_true_patient, y_probs_patient)
+        print(f"AUROC 95% CI: [{ci_lower:.4f}, {ci_upper:.4f}]")
+
+        fraction_of_positives, mean_predicted_value = calibration_curve(
+            y_true_patient, y_probs_patient, n_bins=10
+        )
+        cal_df = pd.DataFrame({
+            'mean_predicted_probability': mean_predicted_value,
+            'fraction_of_positives': fraction_of_positives
+        })
+        cal_df.to_csv("efficientnetb0_calibration_curve.csv", index=False)
+        print("[Saved] Calibration data exported to 'efficientnetb0_calibration_curve.csv'")
+
+        pred_df = pd.DataFrame({
+            'seriesuid': all_uids,
+            'label': all_labels,
+            'probability': all_probs
+        })
+        return avg_loss, auc, auprc, f1, sens, spec, froc, pred_df
+
+    return avg_loss, auc, auprc, f1, sens, spec, froc
+
+# ------------------------------ Main Execution ------------------------------
+def main():
+    set_seed(SEED)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}")
+
+    print("Loading metadata...")
+    metadata = pd.read_csv(METADATA_PATH)
+    if "split" not in metadata.columns:
+        patient_split = pd.read_csv(PATIENT_SPLIT_PATH)
+        split_dict = dict(zip(patient_split["seriesuid"], patient_split["split"]))
+        metadata["split"] = metadata["seriesuid"].map(split_dict)
+
+    train_meta = metadata[metadata["split"] == "train"].reset_index(drop=True)
+    val_meta = metadata[metadata["split"] == "val"].reset_index(drop=True)
+    test_meta = metadata[metadata["split"] == "test"].reset_index(drop=True)
+
+    # UNCHANGED — identical transforms to DenseNet121 script
+    train_transforms = Compose([
+    # ---------- NEW: random translation to break positional shortcut ----------
+    RandAffine(
+        prob=0.8,                        # apply to 80% of patches
+        translate_range=(5, 5, 5),       # up to 5 mm/voxels in each direction
+        padding_mode='zeros',            # fill empty borders with air (0)
+        spatial_size=None,               # keep the original 64×64×64 size
+    ),
+    # -------------------------------------------------------------------------
+    RandRotate90(prob=0.5, spatial_axes=(0, 1)),
+    RandRotate90(prob=0.5, spatial_axes=(1, 2)),
+    RandRotate90(prob=0.5, spatial_axes=(0, 2)),
+    RandFlip(prob=0.5, spatial_axis=0),
+    RandFlip(prob=0.5, spatial_axis=1),
+    RandFlip(prob=0.5, spatial_axis=2),
+    RandGaussianNoise(prob=0.2, std=0.01)
+])
+
+    train_dataset = NodulePatchDataset(train_meta, DATA_DIR, transforms=train_transforms)
+    val_dataset = NodulePatchDataset(val_meta, DATA_DIR, transforms=None)
+    test_dataset = NodulePatchDataset(test_meta, DATA_DIR, transforms=None)
+
+    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True,
+                              num_workers=NUM_WORKERS, pin_memory=PIN_MEMORY,
+                              persistent_workers=PERSISTENT_WORKERS, drop_last=True)
+    val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False,
+                            num_workers=NUM_WORKERS, pin_memory=PIN_MEMORY,
+                            persistent_workers=PERSISTENT_WORKERS)
+    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False,
+                             num_workers=NUM_WORKERS, pin_memory=PIN_MEMORY,
+                             persistent_workers=PERSISTENT_WORKERS)
+
+    model = EfficientNetB0WithMLPHead().to(device)
+
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print("\n--- Model Summary ---")
+    print(f"Model         : 3D EfficientNet-B0 + MLP Head")
+    print(f"Total Params  : {total_params:,}")
+    print(f"Trainable     : {trainable_params:,}")
+    print("---------------------\n")
+
+    # UNCHANGED — identical training config to DenseNet121 script
+    criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([POS_WEIGHT]).to(device))
+    optimizer = optim.AdamW(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
+
+    warmup_epochs = 5
+    warmup_scheduler = LinearLR(optimizer, start_factor=0.1, total_iters=warmup_epochs)
+    cosine_scheduler = CosineAnnealingLR(optimizer, T_max=(MAX_EPOCHS - warmup_epochs))
+    scheduler = SequentialLR(optimizer, schedulers=[warmup_scheduler, cosine_scheduler],
+                             milestones=[warmup_epochs])
+
+    scaler = GradScaler('cuda')
+
+    best_val_auc = 0.0
+    patience_counter = 0
+    history = []
+
+    print("--- Starting Training ---")
+    for epoch in range(1, MAX_EPOCHS + 1):
+        model.train()
+        train_loss = 0.0
+
+        progress_bar = tqdm(train_loader, desc=f"Epoch {epoch}/{MAX_EPOCHS} [Train]")
+        for patches, labels, _ in progress_bar:
+            patches, labels = patches.to(device), labels.to(device)
+            optimizer.zero_grad()
+
+            with autocast('cuda'):
+                logits = model(patches)
+                loss = criterion(logits, labels)
+
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
+            train_loss += loss.item() * patches.size(0)
+            progress_bar.set_postfix({'loss': loss.item()})
+
+        avg_train_loss = train_loss / len(train_loader.dataset)
+        scheduler.step()
+        current_lr = optimizer.param_groups[0]['lr']
+
+        val_loss, val_auc, val_auprc, val_f1, val_sens, val_spec, val_froc = evaluate_model(
+            val_loader, model, device, desc="Validating"
+        )
+
+        history.append({
+            "epoch": epoch,
+            "lr": current_lr,
+            "train_loss": avg_train_loss,
+            "val_loss": val_loss,
+            "val_auc": val_auc,
+            "val_auprc": val_auprc,
+            "val_f1": val_f1,
+            "val_sensitivity": val_sens,
+            "val_specificity": val_spec
+        })
+
+        print(f"\nEpoch {epoch:3d} Results:")
+        print(f"LR: {current_lr:.2e} | Train Loss: {avg_train_loss:.4f} | Val Loss: {val_loss:.4f}")
+        print(f"Val Patient-AUROC: {val_auc:.4f} | AUPRC: {val_auprc:.4f} | F1: {val_f1:.4f} | Sens: {val_sens:.4f}")
+
+        if val_auc > best_val_auc:
+            best_val_auc = val_auc
+            patience_counter = 0
+            torch.save(model.state_dict(), "best_model_efficientnetb0.pth")
+            print(f"  --> [Saved] New Best Validation AUROC: {best_val_auc:.4f}")
+
+            best_metrics = {
+                "epoch": epoch,
+                "auc": val_auc,
+                "auprc": val_auprc,
+                "f1": val_f1,
+                "sensitivity": val_sens,
+                "specificity": val_spec
+            }
+            with open("best_metrics_efficientnetb0.json", "w") as f:
+                json.dump(best_metrics, f, indent=4)
+        else:
+            patience_counter += 1
+            if patience_counter >= EARLY_STOPPING_PATIENCE:
+                print(f"\n*** Early stopping triggered after {epoch} epochs ***")
+                break
+
+    pd.DataFrame(history).to_csv("efficientnetb0_training_log.csv", index=False)
+    print("\n[Saved] Training history exported to 'efficientnetb0_training_log.csv'")
+
+    print("\n" + "=" * 50)
+    print("LOADING BEST MODEL FOR FINAL TEST EVALUATION")
+    print("=" * 50)
+
+    model.load_state_dict(torch.load("best_model_efficientnetb0.pth", map_location=device, weights_only=True))
+
+    test_loss, test_auc, test_auprc, test_f1, test_sens, test_spec, test_froc, pred_df = evaluate_model(
+        test_loader, model, device, desc="Testing", return_preds=True
+    )
+
+    pred_df.to_csv("efficientnetb0_test_predictions.csv", index=False)
+    print("[Saved] Test predictions exported to 'efficientnetb0_test_predictions.csv'")
+
+    print("\n--- FINAL TEST RESULTS (SCAN-LEVEL) ---")
+    print(f"AUROC (Primary):           {test_auc:.4f}")
+    print(f"AUPRC:                     {test_auprc:.4f}")
+    print(f"F1 Score:                  {test_f1:.4f}")
+    print(f"Sensitivity (Recall):      {test_sens:.4f}")
+    print(f"Specificity:               {test_spec:.4f}")
+
+    print(f"\n--- FROC (False Positives per Scan vs Sensitivity) ---")
+    for fp_rate, sensitivity in test_froc.items():
+        print(f"  {fp_rate:10s} : {sensitivity:.4f}")
+    print("====================================================\n")
+
+
+if __name__ == "__main__":
+    main()
+

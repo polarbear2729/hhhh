@@ -1,0 +1,65 @@
+======================================================================
+  HYBRID CNN AUDIT REPORT
+======================================================================
+  Checks: 29 | Passed: 29 | Warnings: 0 | Failed: 0
+  [PASS] File: Model
+         Found (211173.7 KB)
+  [PASS] File: Predictions
+         Found (107.1 KB)
+  [PASS] File: Training log
+         Found (9.2 KB)
+  [PASS] File: Best metrics
+         Found (0.2 KB)
+  [PASS] Weights differ from random
+         Mean delta=0.013492, r=0.0108
+  [PASS] MLP head trained
+         std=0.016820
+  [PASS] CSV columns
+         Shape (1247, 3)
+  [PASS] NaN values
+         None
+  [PASS] Prob range [0,1]
+         [0.0070, 0.9990]
+  [PASS] Both classes present
+         Pos=172.0, Neg=1075.0
+  [PASS] Predictions varied
+         std=0.3400
+  [PASS] AUC recomputable
+         0.9798
+  [PASS] AUPRC recomputable
+         0.9928
+  [PASS] AUC range
+         0.9798 plausible
+  [PASS] Sensitivity valid
+         0.9670
+  [PASS] Epochs logged
+         60
+  [PASS] Loss decreased
+         1.1965→0.1352
+  [PASS] AUROC improved
+         0.6173→0.9992
+  [PASS] Loss varied
+         std=0.332306
+  [PASS] UID order
+         Matches
+  [PASS] Probabilities match
+         All match, max diff 0.00222814
+  [PASS] No overlap: Train∩Val
+         Zero overlap
+  [PASS] No overlap: Train∩Test
+         Zero overlap
+  [PASS] No overlap: Val∩Test
+         Zero overlap
+  [PASS] Class balance train
+         Pos=822 Neg=5115 Ratio=13.8%
+  [PASS] Class balance val
+         Pos=192 Neg=1175 Ratio=14.0%
+  [PASS] Class balance test
+         Pos=172 Neg=1075 Ratio=13.8%
+  [PASS] Permutation p<0.05
+         p=0.0000
+  [PASS] Pos > Neg scores
+         p=1.07e-92
+======================================================================
+  VERDICT: LEGITIMATE ✅
+======================================================================
